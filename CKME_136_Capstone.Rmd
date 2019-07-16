@@ -1,0 +1,294 @@
+---
+title: "CKME 136 Capstone - Retirement Income Adequacy"
+author: "Melissa Cortina"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Import data and select attributes
+
+```{r}
+labourincomedata <- read.csv(file="C:/Users/cortinm/Documents/original_data.csv", header = TRUE)
+```
+
+There are a total of 147 attributs in this dataset. After reading through the associated literature for the dataset, 26 relevant were chosen. 
+
+Select only the 26 columns:
+
+```{r}
+attributes <- c(7,8,10,11,14,17,23,26,29,50,51,55,57,58,61,69,72,73,74,76,79,89,114,120,122,140)
+data <- labourincomedata[attributes]
+#write.csv(data, file="C:/Users/huhmyman/Documents/selected_data")
+```
+
+## Observe dataset
+
+```{r}
+head(data)
+tail(data)
+summary(data)
+str(data)
+```
+
+Check if there are any missing entries:
+
+```{r}
+apply(data, 2, function(x) sum(is.na(x)))
+```
+
+Since all results sum to 0, then there are no null entries in the dataset.
+
+
+## Analysis of unanswered surveys
+
+If an individual left an answer blank or refused to answer while filling out the survey, then the answers were "dummied" and were entered as "98", "99", etc. Using the dataset's literature, each attribute was analyzed to determine if the dummied entries would impact the results. If there are too many dummied entries, then the attribute could be removed. If the dummied entries are low, then the dummied entries were replaced with the mode of that particular attribute if it is a qualitative attribute. If it was a quantitative attribute, the dummied entries were replaced with the mean.
+
+1) ecage26 - Person's age as of December 31  
+No dummied fields
+
+2) ecsex99 - Sex of respondent  
+No dummied fields
+
+3) marst26 - Marital status of person as of December 31  
+71 dummied fields with "97"  
+Mode = 1
+
+```{r}
+data$marst26[data$marst26==97]=1
+summary(data$marst26)
+```
+
+4) mjacg26 - Person's major activity at the end of reference year (working, retired, etc.)  
+No dummied fields
+
+5) immst15 - Flag-Person is an immigrant  
+34,905 dummied fields with "7"  
+Attribute to be removed
+
+6) pvreg25 - Province of residence  
+387 dummied fields with "97"  
+Mode = 35
+
+```{r}
+data$pvreg25[data$pvreg25==97]=35
+summary(data$pvreg25)
+```
+
+7) dwtenr25 - Ownership of dwelling  
+7 dummied fields with "7"  
+Mode = 1
+
+```{r}
+data$dwtenr25[data$dwtenr25==7]=1
+summary(data$dwtenr25)
+```
+
+8) mortg25 - Flag-A mortgage on the dwelling  
+9,654 dummied fields with "9"  
+Mode = 1  
+
+```{r}
+data$mortg25[data$mortg25==9]=1
+summary(data$mortg25)
+```
+
+9) multj28 - Flag-Multiple job holder, any mth refyr  
+6,861 dummied fields with "9"  
+Mode = 2
+
+```{r}
+data$multj28[data$multj28==9]=2
+summary(data$multj28)
+```
+
+10) alhrp28 - Total hours paid all jobs during refyr  
+290 dummied fields with "9997"  
+6,861 dummied fields with "9999"
+
+```{r}
+data$alhrp28[data$alhrp28==9997]=9999
+mean.alhrp28 <- mean(data$alhrp28[!data$alhrp28==9999])
+data$alhrp28[data$alhrp28==9999]=mean.alhrp28
+summary(data$alhrp28)
+```
+
+11) mtlswk28 - Number of months since person last worked  
+2,213 dummied fields with "997"  
+35,700 dummied fields wtih "999"  
+Attribute to be removed
+
+12) yrxfte11 - Number of years of experience, full-yr full-time  
+25 dummied fields with "98"  
+4,685 dummied fields with "97"
+
+```{r}
+data$yrxfte11[data$yrxfte11==98]=97
+mean.yrxfte11 <- mean(data$yrxfte11[!data$yrxfte11==97])
+data$yrxfte11[data$yrxfte11==97]=mean.yrxfte11
+summary(data$yrxfte11)
+```
+
+13) clwkr1 - Class of worker for this job  
+15,719 dummied fields with "99"  
+Mode = 1
+
+```{r}
+data$clwkr1[data$clwkr1==99]=1
+summary(data$clwkr1)
+```
+
+14) prmjb1 - Flag to indicate if job is permanent  
+4,579 dummied fields with "7"  
+Change all to "9" = Not Applicable
+
+```{r}
+data$prmjb1[data$prmjb1==7]=9
+summary(data$prmjb1)
+```
+
+15) fllprt1 - Flag-If job was full-time  
+854 dummied fields with "7"  
+20 dummied fields with "8"  
+Change all to "9" = Not Applicable
+
+```{r}
+data$fllprt1[data$fllprt1==7]=9
+data$fllprt1[data$fllprt1==8]=9
+summary(data$fllprt1)
+```
+
+16) nocg2e6 - Occupational code  
+1,465 dummied fields with "97"  
+Change all to "99" = Not Applicable
+
+```{r}
+data$nocg2e6[data$nocg2e6==97]=99
+summary(data$nocg2e6)
+```
+
+17) imphwe1 - Implicit hourly wage for this paid worker job  
+19,893 dummied fields with "999.99"  
+Kept unchanged
+
+18) penpln1 - If person is covered by a pension plan connected with this job  
+688 dummied fields with "7"  
+11 dummied fields with "8"  
+19,855 dummied fields with "9"  
+Mode = 2
+
+```{r}
+data$penpln1[data$penpln1==7]=2
+data$penpln1[data$penpln1==8]=2
+data$penpln1[data$penpln1==9]=2
+summary(data$penpln1)
+```
+
+19) uncoll1 - If person was a member of a union/collective agreement  
+434 dummied fields with "7"  
+5 dummied fields with "8"  
+19,855 dummied fields with "9"  
+Mode = 3
+
+```{r}
+data$uncoll1[data$uncoll1==7]=3
+data$uncoll1[data$uncoll1==8]=3
+data$uncoll1[data$uncoll1==9]=3
+summary(data$uncoll1)
+```
+
+20) n07c3g10 - Industry code of employer  
+331 dummied fields with "97"  
+Change to "99" = Not Applicable
+
+```{r}
+data$n07c3g10[data$n07c3g10==97]=99
+summary(data$n07c3g10)
+```
+
+21) pubpv10 - If employer is in the public or private sector  
+No dummied fields
+
+22) cqpc42 - CPP/QPP contributions  
+No dummied fields
+
+23) rppc42 - Registered pension plan (RPP) contributions / employer-sponsored  
+No dummied fields
+
+24) udpd42 - Union dues (oth professional premiums)  
+No dummied fields
+
+25) wgsal42 - Wages and salaries, before deductions (employment income)  
+No dummied fields
+
+26) hleveg18 - Highest level of education  
+106 dummied fields with "97"
+Change to "1" = Never attended school
+
+```{r}
+data$hleveg18[data$hleveg18==97]=1
+summary(data$hleveg18)
+```
+
+## Boxplot analysis
+
+The quantitative attributes are in the follwowing positions: 1, 10, 11, 12, 17, 22, 23, 24, 25
+
+Boxplots for each attribute:
+
+```{r}
+quant <- c(1,10,11,12,17,22,23,24,25)
+boxplot(data[1])
+boxplot(data[10])
+boxplot(data[11])
+boxplot(data[12])
+boxplot(data[17])
+boxplot(data[22])
+boxplot(data[23])
+boxplot(data[24])
+boxplot(data[25])
+```
+
+## Correlation analysis - quantitative
+
+```{r}
+dataquant <- data[quant]
+panel.cor <- function(x, y, digits=2, prefix="", cex.cor) 
+{
+    usr <- par("usr"); on.exit(par(usr)) 
+    par(usr = c(0, 1, 0, 1)) 
+    r <- abs(cor(x, y)) 
+    txt <- format(c(r, 0.123456789), digits=digits)[1] 
+    txt <- paste(prefix, txt, sep="") 
+    if(missing(cex.cor)) cex <- 0.8/strwidth(txt) 
+    test <- cor.test(x,y) 
+    Signif <- symnum(test$p.value, corr = FALSE, na = FALSE, 
+                  cutpoints = c(0, 0.001, 0.01, 0.05, 0.1, 1),
+                  symbols = c("***", "**", "*", ".", " ")) 
+    text(0.5, 0.5, txt, cex = cex * r) 
+    text(.8, .8, Signif, cex=cex, col=2) 
+}
+pairs(dataquant, lower.panel=panel.smooth, upper.panel=panel.cor)
+```
+
+
+## Removal of attributes
+
+Results from the above "dummy" analysis conclude that the following attributes should be removed from the dataset:  
+immst15  
+mtlswk28
+
+From the correlation analysis for the quantitative attributes, the correlation between any two attributes is not strong. Therefore, no further removal of attributes is needed.
+
+The elimination of these attributes will be performed using WEKA.
+
+
+## Export dataset
+
+```{r}
+write.csv(data, file="C:/Users/cortinm/Documents/selecteddata.csv")
+```
